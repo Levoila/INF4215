@@ -1,15 +1,5 @@
 %Knowledge base for the Computer Engineering program
 
-%Engineering programs
-program(computer_eng).
-program(software_eng).
-program(biomedical_eng).
-program(civil_eng).
-program(industrial_eng).
-program(mechanical_eng).
-program(physics_eng).
-program(mathematics_eng).
-
 %Courses
 course(inf1005c).
 course(inf1500).
@@ -21,6 +11,27 @@ course(log1000).
 course(inf1600).
 course(mth1102).
 course(ssh3201).
+course(inf1995).
+course(inf2990).
+course(inf3995).
+course(inf4990).
+
+%Engineering programs
+program(computer_eng).
+program(software_eng).
+program(biomedical_eng).
+program(civil_eng).
+program(industrial_eng).
+program(mechanical_eng).
+program(physics_eng).
+program(mathematics_eng).
+
+%Which courses are in which programs
+program_courses(computer_eng, [inf1005c, inf1500, mth1101, mth1007, inf1040, inf1010, log1000, inf1600, mth1102, ssh3201]).
+program_courses(biomedical_eng, [mth1101, mth1007, mth1102]).
+
+course_in_programs(Course, Programs) :-
+	findall(Program, (program_courses(Program, Courses), member(Course, Courses)), Programs).
 
 %Credits
 credits(inf1005c, 3).
@@ -34,15 +45,61 @@ credits(inf1600, 3).
 credits(mth1102, 2).
 credits(ssh3201, 3).
 
+%Inverted classes
+inverted_class(log1000).
+inverted_class(inf1005c).
+
+inverted_classes(Classes) :-
+	findall(Class, inverted_class(Class), Classes).
+	
+%mandatory courses
+mandatory(inf1005c).
+mandatory(inf1010).
+mandatory(mth1101).
+mandatory(mth1007).
+
+mandatory_courses(Courses, MandatoryCourses) :-
+	findall(MandatoryCourse, (member(MandatoryCourse, Courses), mandatory(MandatoryCourse)), MandatoryCourses).
+	
+%Optional courses
+optional(log1000).
+optional(ssh3201).
+
+optional_courses(Courses, OptionalCourses) :-
+	findall(OptionalCourse, (member(OptionalCourse, Courses), optional(OptionalCourse)), OptionalCourses).
+	
+%Project courses
+project(inf1995).
+project(inf2990).
+project(inf3995).
+project(inf4990).
+
+project_courses(Courses, ProjectCourses) :-
+	findall(ProjectCourse, (member(ProjectCourse, Courses), project(ProjectCourse)), ProjectCourses).
+
+courses_types(Courses, MandatoryCourses, OptionalCourses, ProjectCourses) :-
+	valid_courses(Courses),
+	mandatory_courses(Courses, MandatoryCourses),
+	optional_courses(Courses, OptionalCourses),
+	project_courses(Courses, ProjectCourses).
+	
 %prerequisites
 prerequesite(inf1600, [inf1005c, inf1500]).
 prerequisite(mth1102, [mth1101]).
 
-%corequisite
+%corequisites
 corequisite(mth1102, [mth1007]).
 
 %Credits requirements
 credits_needed(ssh3201, 6).
+
+%Programming languages in each course
+use_programming_languages(inf1005c, [c]).
+use_programming_languages(inf1010, [cpp]).
+use_programming_languages(inf1600, [c, asm]).
+
+courses_with_programming_language(Courses, Language) :-
+	findall(Course, (use_programming_languages(Course, Languages), member(Language, Languages)), Courses).
 
 %validators
 valid_choice(Chosen, Completed) :-
