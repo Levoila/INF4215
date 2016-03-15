@@ -1,5 +1,21 @@
 %Knowledge base for the Computer Engineering program
 
+%How to Query Information
+% 1.  valid_choice(ChosenCourses, CompletedCourses) Fails if the course choice is not valid
+% 2.  choice_quality(ChosenCourse, CompletedCourse, CompletedCourses, Points) Points give the quality of the choice out of 10
+% 3.  courses_with_subject(Courses, Subject) Courses contains a list of courses with subject Subject
+% 4.  courses_with_programming_language(Courses, Language) Courses contains a list of courses using programming language Language
+% 5.  course_in_programs(Course, Programs) Programs contains the programs in which the course Course is given
+% 6.  inverted_classes(Classes)
+% 7.  courses_types(Courses, MandatoryCourses, OptionalCourses, ProjectCourses)
+%	  MandatoryCourses contains courses in Courses which are mandatory
+%	  OptionalCourses contains courses in Courses which are optional
+%	  ProjectCourses contains courses in Courses which are project courses
+% 8.  ???
+% 9.  ???
+% 10. exchange_student_courses(Courses).
+% 11. ...
+
 %Courses
 course(inf1005c).
 course(inf1500).
@@ -82,6 +98,9 @@ courses_types(Courses, MandatoryCourses, OptionalCourses, ProjectCourses) :-
 	mandatory_courses(Courses, MandatoryCourses),
 	optional_courses(Courses, OptionalCourses),
 	project_courses(Courses, ProjectCourses).
+	
+%Courses for exchange students
+exchange_student_courses([inf1005c, inf1600, mth1101, mth1007]).
 	
 %prerequisites
 prerequesite(inf1600, [inf1005c, inf1500]).
