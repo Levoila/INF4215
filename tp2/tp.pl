@@ -40,6 +40,7 @@ student(raphael_Lapierre).
 student(cedrick_Emond).
 student(eric_Morissete).
 
+
 %Student follow course
 follow(felix_Prevost, [inf1005c, inf1500, mth1101, mth1007, inf1040, inf1010, log1000, inf1600, mth1102, ssh5201]).
 follow(guillaume_Arruda, [inf1005c, inf1500, mth1101, mth1007, inf1040, inf1010, log1000, inf1600, mth1102, ssh5201]).
