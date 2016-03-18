@@ -12,7 +12,8 @@
 %	  OptionalCourses contains courses in Courses which are optional
 %	  ProjectCourses contains courses in Courses which are project courses
 % 8.  ???
-% 9.  ???
+% 9.  in_concentration(Student, Concentration)
+%	  thematicOrientation(Concentration) Will return if the concentration is a thematicOrientation.
 % 10. exchange_student_courses(Courses).
 % 11. ...
 
@@ -48,9 +49,23 @@ follow(eric_Morissete, [inf1005c, inf1500, mth1101, mth1007, inf1040, inf1010, l
 
 %concentration
 concentration(security).
-concentration(multimedia).
+concentration(aerospatial).
 concentration(network).
-concentration(ai).
+concentration(innovation).
+concentration(management_tools).
+concentration(international_project).
+
+%Orientation
+thematicOrientation(innovation).
+thematicOrientation(management_tools).
+thematicOrientation(international_project).
+
+%Student in concentration
+in_concentration(cedrick_Emond, security).
+in_concentration(felix_Prevost, aerospatial).
+in_concentration(guillaume_Arruda, network).
+in_concentration(eric_Morissete, international_project).
+in_concentration(raphael_Lapierre, management_tools).
 
 %Engineering programs
 program(computer_eng).
