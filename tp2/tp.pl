@@ -7,10 +7,10 @@
 % 4.  courses_with_programming_language(Courses, Language) Courses contains a list of courses using programming language Language
 % 5.  course_in_programs(Course, Programs) Programs contains the programs in which the course Course is given
 % 6.  inverted_classes(Classes)
-% 7.  courses_types(Courses, MandatoryCourses, OptionalCourses, ProjectCourses)
-%	  MandatoryCourses contains courses in Courses which are mandatory
-%	  OptionalCourses contains courses in Courses which are optional
-%	  ProjectCourses contains courses in Courses which are project courses
+% 7.  courses_types(Student, MandatoryCourses, OptionalCourses, ProjectCourses)
+%	  MandatoryCourses contains courses that Student follows which are mandatory
+%	  OptionalCourses contains courses that Student follows which are optional
+%	  ProjectCourses contains courses that Student follows which are project courses
 % 8.  in_concentration(Student, Concentration)
 %	  thematicOrientation(Concentration) Will return true if the concentration is a thematicOrientation.
 % 9.  equivalencies(Subjects, Courses) Courses contains a list of courses you can have equivalency for given a list of subjects for the courses
@@ -50,7 +50,6 @@ follow(eric_Morissete, [inf1005c, inf1500, mth1101, mth1007, inf1040, inf1010, l
 
 %concentration
 concentration(security).
-<<<<<<< HEAD
 concentration(aerospatial).
 concentration(network).
 concentration(innovation).
@@ -68,11 +67,6 @@ in_concentration(felix_Prevost, aerospatial).
 in_concentration(guillaume_Arruda, network).
 in_concentration(eric_Morissete, international_project).
 in_concentration(raphael_Lapierre, management_tools).
-=======
-concentration(multimedia).
-concentration(network).
-concentration(ai).
->>>>>>> Integration du concept de student dans prolog
 
 %Engineering programs
 program(computer_eng).
@@ -227,10 +221,6 @@ subject(embedded).
 subject(economics).
 subject(nothing).
 subject(software_eng).
-<<<<<<< HEAD
-=======
-subject(fpga).
->>>>>>> Integration du concept de student dans prolog
 
 direct(fpga, embedded).
 direct(programming, mathematics).
