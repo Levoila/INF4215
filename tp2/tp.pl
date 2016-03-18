@@ -11,11 +11,11 @@
 %	  MandatoryCourses contains courses in Courses which are mandatory
 %	  OptionalCourses contains courses in Courses which are optional
 %	  ProjectCourses contains courses in Courses which are project courses
-% 8.  ???
-% 9.  in_concentration(Student, Concentration)
-%	  thematicOrientation(Concentration) Will return if the concentration is a thematicOrientation.
+% 8.  in_concentration(Student, Concentration)
+%	  thematicOrientation(Concentration) Will return true if the concentration is a thematicOrientation.
+% 9.  equivalencies(Subjects, Courses) Courses contains a list of courses you can have equivalency for given a list of subjects for the courses
+%									   you have already taken
 % 10. exchange_student_courses(Courses).
-% 11. ...
 
 %Courses
 course(inf1005c).
@@ -49,6 +49,7 @@ follow(eric_Morissete, [inf1005c, inf1500, mth1101, mth1007, inf1040, inf1010, l
 
 %concentration
 concentration(security).
+<<<<<<< HEAD
 concentration(aerospatial).
 concentration(network).
 concentration(innovation).
@@ -66,6 +67,11 @@ in_concentration(felix_Prevost, aerospatial).
 in_concentration(guillaume_Arruda, network).
 in_concentration(eric_Morissete, international_project).
 in_concentration(raphael_Lapierre, management_tools).
+=======
+concentration(multimedia).
+concentration(network).
+concentration(ai).
+>>>>>>> Integration du concept de student dans prolog
 
 %Engineering programs
 program(computer_eng).
@@ -220,7 +226,12 @@ subject(embedded).
 subject(economics).
 subject(nothing).
 subject(software_eng).
+<<<<<<< HEAD
+=======
+subject(fpga).
+>>>>>>> Integration du concept de student dans prolog
 
+direct(fpga, embedded).
 direct(programming, mathematics).
 direct(procedural_programming, programming).
 direct(oob_programming, programming).
@@ -251,6 +262,17 @@ is_subject(X, Y) :-
 courses_with_subject(Subject, Courses) :-
 	setof(ChildSubject, is_subject(ChildSubject, Subject), Subjects),
 	findall(Course, (has_subjects(Course, CourseSubjects), intersection(Subjects, CourseSubjects, Int), list_length(Int, Length), Length > 0) , Courses).
+	
+equivalencies(Subjects, Courses) :-
+	findall(Course, equivalency(Subjects, Course), Courses).
+
+equivalency(Subjects, Course) :-
+	course(Course),
+	has_subjects(Course, CourseSubjects),
+	forall(member(CourseSubject, CourseSubjects), is_in_subject_list(CourseSubject, Subjects)).
+	
+is_in_subject_list(Subject, Subjects) :-
+	member(Subject, Subjects) ; (is_subject(ChildSubject, Subject), member(ChildSubject, Subjects)).
 
 	
 %helpers
