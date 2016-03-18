@@ -26,11 +26,31 @@ course(inf1010).
 course(log1000).
 course(inf1600).
 course(mth1102).
-course(ssh3201).
+course(ssh5201).
 course(inf1995).
 course(inf2990).
 course(inf3995).
 course(inf4990).
+
+%Etudiant
+student(felix_Prevost).
+student(guillaume_Arruda).
+student(raphael_Lapierre).
+student(cedrick_Emond).
+student(eric_Morissete).
+
+%Student follow course
+follow(felix_Prevost, [inf1005c, inf1500, mth1101, mth1007, inf1040, inf1010, log1000, inf1600, mth1102, ssh5201]).
+follow(guillaume_Arruda, [inf1005c, inf1500, mth1101, mth1007, inf1040, inf1010, log1000, inf1600, mth1102, ssh5201]).
+follow(raphael_Lapierre, [inf1005c, inf1500, mth1101, mth1007, inf1040, inf1010, log1000, inf1600, mth1102, ssh5201]).
+follow(cedrick_Emond, [inf1005c, inf1500, mth1101, mth1007, inf1040, inf1010, log1000, inf1600, mth1102, ssh5201]).
+follow(eric_Morissete, [inf1005c, inf1500, mth1101, mth1007, inf1040, inf1010, log1000, inf1600, mth1102, ssh5201]).
+
+%concentration
+concentration(security).
+concentration(multimedia).
+concentration(network).
+concentration(ai).
 
 %Engineering programs
 program(computer_eng).
@@ -43,7 +63,7 @@ program(physics_eng).
 program(mathematics_eng).
 
 %Which courses are in which programs
-program_courses(computer_eng, [inf1005c, inf1500, mth1101, mth1007, inf1040, inf1010, log1000, inf1600, mth1102, ssh3201]).
+program_courses(computer_eng, [inf1005c, inf1500, mth1101, mth1007, inf1040, inf1010, log1000, inf1600, mth1102, ssh5201]).
 program_courses(biomedical_eng, [mth1101, mth1007, mth1102]).
 
 course_in_programs(Course, Programs) :-
@@ -59,7 +79,7 @@ credits(inf1010, 3).
 credits(log1000, 3).
 credits(inf1600, 3).
 credits(mth1102, 2).
-credits(ssh3201, 3).
+credits(ssh5201, 3).
 
 %Inverted classes
 inverted_class(log1000).
@@ -79,7 +99,7 @@ mandatory_courses(Courses, MandatoryCourses) :-
 	
 %Optional courses
 optional(log1000).
-optional(ssh3201).
+optional(ssh5201).
 
 optional_courses(Courses, OptionalCourses) :-
 	findall(OptionalCourse, (member(OptionalCourse, Courses), optional(OptionalCourse)), OptionalCourses).
@@ -93,7 +113,8 @@ project(inf4990).
 project_courses(Courses, ProjectCourses) :-
 	findall(ProjectCourse, (member(ProjectCourse, Courses), project(ProjectCourse)), ProjectCourses).
 
-courses_types(Courses, MandatoryCourses, OptionalCourses, ProjectCourses) :-
+courses_types(Student, MandatoryCourses, OptionalCourses, ProjectCourses) :-	
+	follow(Student, Courses),
 	valid_courses(Courses),
 	mandatory_courses(Courses, MandatoryCourses),
 	optional_courses(Courses, OptionalCourses),
@@ -110,7 +131,7 @@ prerequisite(mth1102, [mth1101]).
 corequisite(mth1102, [mth1007]).
 
 %Credits requirements
-credits_needed(ssh3201, 6).
+credits_needed(ssh5201, 6).
 
 %Programming languages in each course
 use_programming_languages(inf1005c, [c]).
@@ -181,14 +202,24 @@ subject(programming).
 subject(procedural_programming).
 subject(oob_programming).
 subject(embedded).
+subject(economics).
+subject(nothing).
+subject(software_eng).
 
 direct(programming, mathematics).
 direct(procedural_programming, programming).
 direct(oob_programming, programming).
 
 has_subjects(inf1005c, [procedural_programming]).
-has_subjects(inf1600, [embedded, procedural_programming]).
+has_subjects(inf1500, [procedural_programming, embedded]).
+has_subjects(mth1101, [mathematics]).
+has_subjects(mth1007, [mathematics]).
+has_subjects(inf1040, [nothing]).
 has_subjects(inf1010, [oob_programming]).
+has_subjects(log1000, [software_eng]).
+has_subjects(inf1600, [embedded, procedural_programming]).
+has_subjects(mth1102, [mathematics]).
+has_subjects(ssh5201, [economics]).
 
 is_subject(X, X).
 is_subject(X, Y) :- 
