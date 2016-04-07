@@ -117,6 +117,8 @@ class Net:
 		y = T.ivector()
 		index = T.lscalar()
 		learningRate = T.scalar()
+		L1_reg = 0.0
+		L2_reg = 0.0
 		
 		random_stream = RandomStreams(seed=420)
 		indices = random_stream.random_integers((batchSize,), low=0, high=train_x.shape[0]-1)
@@ -133,28 +135,38 @@ class Net:
 			poolsize=(2,2)
 		)
 		
-		layer0Out = layer0.output.flatten(2)
-		
-		layer1 = HiddenLayer(
+		layer1 = ConvPoolLayer(
 			rng=rng,
-			input=layer0Out,
-			n_in=64*13*13,
-			n_out=256,
+			input=layer0.output,
+			filter_shape=(128,64,3,3),
+			image_shape=(None,64,13,13),
+			poolsize=(2,2)
+		)
+		
+		layer1Out = layer1.output.flatten(2)
+		
+		layer2 = HiddenLayer(
+			rng=rng,
+			input=layer1Out,
+			n_in=128*5*5,
+			n_out=512,
 			activation=relu
 		)
 		
-		layer2 = LogisticRegression(
+		layer3 = LogisticRegression(
 			rng=rng,
-			input=layer1.output,
-			n_in=layer1.n_out,
+			input=layer2.output,
+			n_in=layer2.n_out,
 			n_out=10
 		)
 		
-		cost = layer2.negative_log_likelihood(y)	
+		L1 = abs(layer0.W).sum() + abs(layer1.W).sum() + abs(layer2.W).sum() + abs(layer3.W).sum()
+		L2 = (layer0.W**2).sum() + (layer1.W**2).sum() + (layer2.W**2).sum() + (layer3.W**2).sum()
+		cost = layer3.negative_log_likelihood(y) + L1_reg * L1 + L2_reg * L2	
 	
 		self.test_model = theano.function(
 			[index],
-			layer2.errors(y),
+			layer3.errors(y),
 			givens={
 				layer0Input: self.test_x[index * 1000:(index+1)*1000,:,:,:],
 				y: self.test_y[index * 1000:(index+1)*1000]
@@ -163,22 +175,35 @@ class Net:
 		
 		self.validate_model = theano.function(
 			[index],
-			[layer2.errors(y), cost],
+			[layer3.errors(y), cost],
 			givens={
 				layer0Input: self.valid_x[index * 1000:(index+1)*1000,:,:,:],
 				y: self.valid_y[index * 1000:(index+1)*1000]
 			}
 		)
 		
-		params = layer2.params + layer1.params + layer0.params
+		params = layer3.params + layer2.params + layer1.params + layer0.params
 		grads = T.grad(cost, params)
-		updates = [(param, param - learningRate * grad) for param, grad in zip(params, grads)]
+		#updates = [(param, param - learningRate * grad) for param, grad in zip(params, grads)]
+		updates = self.rmsProp(cost, params, 0.7, 0.01, learningRate)
 		self.train_model = theano.function(
 			[learningRate],
 			cost,
 			updates=updates
 		)
+	
+	def rmsProp(self, loss, params, rho, epsilon, learningRate):
+		grads = theano.grad(cost=loss, wrt=params)
 		
+		updates = []
+		for param, grad in zip(params, grads):
+			value = param.get_value(borrow=True)
+			acc = theano.shared(numpy.zeros(value.shape, dtype=value.dtype), broadcastable=param.broadcastable)
+			accNew = rho * acc + (1 - rho) * grad ** 2
+			updates.append((acc, accNew))
+			updates.append((param, param - (learningRate * grad / T.sqrt(accNew + epsilon))))
+		return updates
+	
 	def validate(self):
 		errTotal = 0.0
 		costTotal = 0.0
@@ -207,13 +232,18 @@ def main():
 	train_x, train_y, valid_x, valid_y, test_x, test_y = loadData()
 	net = Net(train_x, train_y, valid_x, valid_y, test_x, test_y, 128)
 	
+	validationLosses = []
+	trainingLosses = []
+	
 	for j in range(20):
 		loss = 0
 		for i in range(390):
-			loss += net.train_model(0.1)
+			loss += net.train_model(0.05)
 			
 		err, cost = net.validate()
 		print err, cost, loss/390.0
+		validationLosses.append(cost)
+		trainingLosses.append(loss / 390.0)
 	
 	err = net.test()
 	print 'ERREUR FINALE :', err
