@@ -288,8 +288,6 @@ def main():
 	
 	fig.canvas.draw()
 	
-	minLoss = 100.0
-	minParams = None
 	for j in range(graphUpdates):
 		loss = 0
 		for i in range(graphUpdateFreq):
@@ -300,10 +298,6 @@ def main():
 		trainingLosses.append(math.log(loss / graphUpdateFreq))
 		validationErr.append(err)
 		
-		if cost < minLoss:
-			minLoss = cost
-			minParams = net.getParams()
-		
 		trainingLossLine.set_xdata(range(j+1))
 		trainingLossLine.set_ydata(trainingLosses)
 		validationLossLine.set_xdata(range(j+1))
@@ -311,8 +305,6 @@ def main():
 		errLine.set_xdata(range(j+1))
 		errLine.set_ydata(validationErr)
 		fig.canvas.draw()
-	
-	net.setParams(minParams)
 	
 	err = net.test()
 	print 'ERREUR FINALE :', err
