@@ -1,7 +1,5 @@
 import os
-
-os.system('nvidia-smi')
-os.environ['LD_LIBRARY_PATH'] = os.environ['LD_LIBRARY_PATH'] + ':/opt/cuda-7.0/lib64'
+os.environ['THEANO_FLAGS'] = 'floatX=float32,device=gpu,lib.cnmem=0.5,allow_gc=False'
 
 import theano
 import theano.tensor as T
