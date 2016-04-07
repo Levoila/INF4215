@@ -187,16 +187,8 @@ def loadData():
 	test_x, test_y = test_set
 	
 	return train_x, train_y, valid_x, valid_y, test_x, test_y
-	
-def configTheano():
-	theano.config.device = 'gpu'
-	theano.config.floatX = 'float32'
-	theano.config.allow_gx = False
-	config.theano.cnmem = 0.5
 
 def main():
-	configTheano()
-	
 	train_x, train_y, valid_x, valid_y, test_x, test_y = loadData()
 	net = Net(train_x, train_y, valid_x, valid_y, test_x, test_y, 32)
 	
