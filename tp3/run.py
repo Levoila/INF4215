@@ -1,5 +1,5 @@
 import os
-os.environ['THEANO_FLAGS'] = 'floatX=float32,device=gpu,lib.cnmem=0.5,allow_gc=False'
+os.environ['THEANO_FLAGS'] = 'floatX=float32,device=gpu,lib.cnmem=0.5'
 
 import theano
 import theano.tensor as T
