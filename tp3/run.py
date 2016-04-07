@@ -13,17 +13,17 @@ import gzip
 #From https://github.com/Theano/Theano/blob/master/theano/tensor/nnet/nnet.py#L2187
 #to be compatible with theano 0.7.0
 def relu(x):
-	return 0.5 * (x + abs(x))
+	return 0.417 * (x + 1.4 * abs(x))
 
 #inspired by http://deeplearning.net/tutorial/lenet.html
 # and http://deeplearning.net/tutorial/mlp.html
 class HiddenLayer(object):
     def __init__(self, rng, input, n_in, n_out, W=None, b=None,
                  activation=relu):
-					 
+
         self.n_out = n_out
         self.input = input
-        
+
         if W is None:
 			W_bound = numpy.sqrt(3) * numpy.sqrt(1.0 / n_in)
 			self.W = theano.shared(numpy.asarray(rng.uniform(low=-W_bound, high=W_bound, size=(n_in, n_out)), dtype=theano.config.floatX), borrow=True)
@@ -36,14 +36,14 @@ class HiddenLayer(object):
             lin_output if activation is None
             else activation(lin_output)
         )
-        
+
         self.params = [self.W, self.b]
-        
+
 class LogisticRegression(object):
     def __init__(self, rng, input, n_in, n_out):
         W_bound = numpy.sqrt(3) * numpy.sqrt(1.0 / n_in)
         self.W = theano.shared(numpy.asarray(rng.uniform(low=-W_bound, high=W_bound, size=(n_in, n_out)), dtype=theano.config.floatX), borrow=True)
-        
+
         self.b = theano.shared(numpy.zeros((n_out,), dtype=theano.config.floatX) + 0.1, name='b', borrow=True)
 
         self.p_y_given_x = T.nnet.softmax(T.dot(input, self.W) + self.b)
@@ -58,7 +58,7 @@ class LogisticRegression(object):
 
     def errors(self, y):
         return T.mean(T.neq(self.y_pred, y))
-        
+
 class ConvPoolLayer(object):
 
     def __init__(self, rng, input, filter_shape, image_shape, poolsize=(2, 2)):
@@ -66,10 +66,10 @@ class ConvPoolLayer(object):
         assert image_shape[1] == filter_shape[1]
         self.input = input
 
-        
+
         fan_in = numpy.prod(filter_shape[1:])
         fan_out = (filter_shape[0] * numpy.prod(filter_shape[2:]) // numpy.prod(poolsize))
-        
+
         #Glorot initialization http://andyljones.tumblr.com/post/110998971763/an-explanation-of-xavier-initialization
         W_bound = numpy.sqrt(3) * numpy.sqrt(1.0 / fan_in)
         self.W = theano.shared(
@@ -88,7 +88,7 @@ class ConvPoolLayer(object):
             filter_shape=filter_shape,
             image_shape=image_shape
         )
-        
+
         pool_out = downsample.max_pool_2d(
 			input=conv_out,
 			ds=poolsize,
@@ -100,33 +100,33 @@ class ConvPoolLayer(object):
         self.params = [self.W, self.b]
 
         self.input = input
-        
+
 
 class Net:
 	def __init__(self, train_x, train_y, valid_x, valid_y, test_x, test_y, batchSize):
 		rng = numpy.random.RandomState(42)
-		
+
 		self.train_x = theano.shared(train_x.astype('float32'))
 		self.train_y = theano.shared(train_y.astype('int32'))
 		self.valid_x = theano.shared(valid_x.astype('float32')).reshape((valid_x.shape[0],1,28,28))
 		self.valid_y = theano.shared(valid_y.astype('int32'))
 		self.test_x = theano.shared(test_x.astype('float32')).reshape((test_x.shape[0],1,28,28))
 		self.test_y = theano.shared(test_y.astype('int32'))
-		
+
 		x = T.matrix()
 		y = T.ivector()
 		index = T.lscalar()
 		learningRate = T.scalar()
 		L1_reg = 0.0
 		L2_reg = 0.0
-		
+
 		random_stream = RandomStreams(seed=420)
 		indices = random_stream.random_integers((batchSize,), low=0, high=train_x.shape[0]-1)
 		x = self.train_x.take(indices, axis=0)
 		y = self.train_y.take(indices, axis=0)
-		
+
 		layer0Input = x.reshape((batchSize,1,28,28))
-		
+
 		layer0 = ConvPoolLayer(
 			rng=rng,
 			input=layer0Input,
@@ -134,7 +134,7 @@ class Net:
 			image_shape=(None,1,28,28),
 			poolsize=(2,2)
 		)
-		
+
 		layer1 = ConvPoolLayer(
 			rng=rng,
 			input=layer0.output,
@@ -142,9 +142,9 @@ class Net:
 			image_shape=(None,64,13,13),
 			poolsize=(2,2)
 		)
-		
+
 		layer1Out = layer1.output.flatten(2)
-		
+
 		layer2 = HiddenLayer(
 			rng=rng,
 			input=layer1Out,
@@ -152,18 +152,18 @@ class Net:
 			n_out=512,
 			activation=relu
 		)
-		
+
 		layer3 = LogisticRegression(
 			rng=rng,
 			input=layer2.output,
 			n_in=layer2.n_out,
 			n_out=10
 		)
-		
+
 		L1 = abs(layer0.W).sum() + abs(layer1.W).sum() + abs(layer2.W).sum() + abs(layer3.W).sum()
 		L2 = (layer0.W**2).sum() + (layer1.W**2).sum() + (layer2.W**2).sum() + (layer3.W**2).sum()
-		cost = layer3.negative_log_likelihood(y) + L1_reg * L1 + L2_reg * L2	
-	
+		cost = layer3.negative_log_likelihood(y) + L1_reg * L1 + L2_reg * L2
+
 		self.test_model = theano.function(
 			[index],
 			layer3.errors(y),
@@ -172,7 +172,7 @@ class Net:
 				y: self.test_y[index * 1000:(index+1)*1000]
 			}
 		)
-		
+
 		self.validate_model = theano.function(
 			[index],
 			[layer3.errors(y), cost],
@@ -181,7 +181,7 @@ class Net:
 				y: self.valid_y[index * 1000:(index+1)*1000]
 			}
 		)
-		
+
 		params = layer3.params + layer2.params + layer1.params + layer0.params
 		grads = T.grad(cost, params)
 		#updates = [(param, param - learningRate * grad) for param, grad in zip(params, grads)]
@@ -191,10 +191,10 @@ class Net:
 			cost,
 			updates=updates
 		)
-	
+
 	def rmsProp(self, loss, params, rho, epsilon, learningRate):
 		grads = theano.grad(cost=loss, wrt=params)
-		
+
 		updates = []
 		for param, grad in zip(params, grads):
 			value = param.get_value(borrow=True)
@@ -203,7 +203,7 @@ class Net:
 			updates.append((acc, accNew))
 			updates.append((param, param - (learningRate * grad / T.sqrt(accNew + epsilon))))
 		return updates
-	
+
 	def validate(self):
 		errTotal = 0.0
 		costTotal = 0.0
@@ -225,29 +225,28 @@ def loadData():
 	train_x, train_y = train_set
 	valid_x, valid_y = valid_set
 	test_x, test_y = test_set
-	
+
 	return train_x, train_y, valid_x, valid_y, test_x, test_y
 
 def main():
 	train_x, train_y, valid_x, valid_y, test_x, test_y = loadData()
 	net = Net(train_x, train_y, valid_x, valid_y, test_x, test_y, 128)
-	
+
 	validationLosses = []
 	trainingLosses = []
-	
+
 	for j in range(20):
 		loss = 0
 		for i in range(390):
 			loss += net.train_model(0.05)
-			
+
 		err, cost = net.validate()
 		print err, cost, loss/390.0
 		validationLosses.append(cost)
 		trainingLosses.append(loss / 390.0)
-	
+
 	err = net.test()
 	print 'ERREUR FINALE :', err
 
 if __name__ == '__main__':
 	main()
-
