@@ -9,6 +9,8 @@ from theano.tensor.signal import downsample
 from theano.tensor.shared_randomstreams import RandomStreams
 import cPickle
 import gzip
+import matplotlib.pyplot as plt
+import math
 
 #From https://github.com/Theano/Theano/blob/master/theano/tensor/nnet/nnet.py#L2187
 #to be compatible with theano 0.7.0
@@ -181,11 +183,11 @@ class Net:
 				y: self.valid_y[index * 1000:(index+1)*1000]
 			}
 		)
-
-		params = layer3.params + layer2.params + layer1.params + layer0.params
-		grads = T.grad(cost, params)
-		#updates = [(param, param - learningRate * grad) for param, grad in zip(params, grads)]
-		updates = self.rmsProp(cost, params, 0.7, 0.01, learningRate)
+		
+		self.forward = theano.function([layer0Input], [layer3.p_y_given_x])
+		
+		self.params = layer3.params + layer2.params + layer1.params + layer0.params
+		updates = self.rmsProp(cost, self.params, 0.7, 0.01, learningRate)
 		self.train_model = theano.function(
 			[learningRate],
 			cost,
@@ -218,6 +220,21 @@ class Net:
 		for i in range(10):
 			err += self.test_model(i)
 		return err / 10.0
+		
+	def predict(self, img):
+		img = img.reshape(1,1,28,28).astype('float32')
+		prob = self.forward(img)[0].flatten(1)
+		prediction = numpy.argmax(prob, axis=0)
+		prob = prob[prediction]
+		return prediction, prob
+		
+	def getParams(self):
+		return [param.get_value() for param in self.params]
+		
+	def setParams(self, params):
+		for i in range(len(params)):
+			self.params[i].set_value(params[i])
+		
 
 def loadData():
 	with gzip.open('mnist.pkl.gz', 'rb') as f:
@@ -227,26 +244,80 @@ def loadData():
 	test_x, test_y = test_set
 
 	return train_x, train_y, valid_x, valid_y, test_x, test_y
+	
+def showExamples(net, n, test_set):
+	plt.figure()
+	for i in range(n):
+		index = numpy.random.randint(0, 10000)
+		img = test_set[index,:]
+		prediction, probability = net.predict(img)
+		plt.imshow(img.reshape((28,28)), interpolation='none', cmap='gray')
+		plt.title("Le reseau predit que c'est le chiffre " + str(prediction) + ' avec ' + str(probability*100) +'% de confiance')
+		plt.show()
+		raw_input('Appuyer sur [enter] pour continuer')
 
 def main():
+	batchSize = 128
+	batchUpdates = 7600
+	graphUpdateFreq = 20 #Number of updates after which the graph is updated
+	graphUpdates = batchUpdates // graphUpdateFreq
+	
 	train_x, train_y, valid_x, valid_y, test_x, test_y = loadData()
-	net = Net(train_x, train_y, valid_x, valid_y, test_x, test_y, 128)
-
+	net = Net(train_x, train_y, valid_x, valid_y, test_x, test_y, batchSize)
+	
 	validationLosses = []
+	validationErr = []
 	trainingLosses = []
-
-	for j in range(20):
+	
+	plt.ion()
+	fig = plt.figure()
+	lossPlot = fig.add_subplot(211)
+	lossPlot.axis([0,graphUpdates,-10,0.0])
+	trainingLossLine, = lossPlot.plot([], [], label='Cout apprentissage')
+	validationLossLine, = lossPlot.plot([], [], label='Cout validation')
+	legend = lossPlot.legend(loc='upper right', shadow=True)
+	plt.title("Fonction de cout sur l'ensemble de test et de validation")
+	plt.show()
+	
+	errPlot = fig.add_subplot(212)
+	errPlot.axis([0, graphUpdates, 0, 0.3])
+	errLine, = errPlot.plot([], [], label="Erreur sur l'ensemble de validation")
+	legend = errPlot.legend(loc='upper right', shadow=True)
+	plt.title("Erreur sur l'ensemble de validation")
+	plt.show()
+	
+	fig.canvas.draw()
+	
+	minLoss = 100.0
+	minParams = None
+	for j in range(graphUpdates):
 		loss = 0
-		for i in range(390):
+		for i in range(graphUpdateFreq):
 			loss += net.train_model(0.05)
 
 		err, cost = net.validate()
-		print err, cost, loss/390.0
-		validationLosses.append(cost)
-		trainingLosses.append(loss / 390.0)
-
+		validationLosses.append(math.log(cost))
+		trainingLosses.append(math.log(loss / graphUpdateFreq))
+		validationErr.append(err)
+		
+		if cost < minLoss:
+			minLoss = cost
+			minParams = net.getParams()
+		
+		trainingLossLine.set_xdata(range(j+1))
+		trainingLossLine.set_ydata(trainingLosses)
+		validationLossLine.set_xdata(range(j+1))
+		validationLossLine.set_ydata(validationLosses)
+		errLine.set_xdata(range(j+1))
+		errLine.set_ydata(validationErr)
+		fig.canvas.draw()
+	
+	net.setParams(minParams)
+	
 	err = net.test()
 	print 'ERREUR FINALE :', err
+	
+	showExamples(net, 20, test_x)
 
 if __name__ == '__main__':
 	main()
