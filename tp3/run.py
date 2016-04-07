@@ -128,7 +128,7 @@ class Net:
 		layer0 = ConvPoolLayer(
 			rng=rng,
 			input=layer0Input,
-			filter_shape=(32,1,3,3),
+			filter_shape=(64,1,3,3),
 			image_shape=(None,1,28,28),
 			poolsize=(2,2)
 		)
@@ -138,7 +138,7 @@ class Net:
 		layer1 = HiddenLayer(
 			rng=rng,
 			input=layer0Out,
-			n_in=32*13*13,
+			n_in=64*13*13,
 			n_out=256,
 			activation=relu
 		)
@@ -150,26 +150,26 @@ class Net:
 			n_out=10
 		)
 		
-		
+		cost = layer2.negative_log_likelihood(y)	
+	
 		self.test_model = theano.function(
-			[],
+			[index],
 			layer2.errors(y),
 			givens={
-				layer0Input: self.test_x,
-				y: self.test_y
+				layer0Input: self.test_x[index * 1000:(index+1)*1000,:,:,:],
+				y: self.test_y[index * 1000:(index+1)*1000]
 			}
 		)
 		
 		self.validate_model = theano.function(
-			[],
-			layer2.errors(y),
+			[index],
+			[layer2.errors(y), cost],
 			givens={
-				layer0Input: self.valid_x,
-				y: self.valid_y
+				layer0Input: self.valid_x[index * 1000:(index+1)*1000,:,:,:],
+				y: self.valid_y[index * 1000:(index+1)*1000]
 			}
 		)
 		
-		cost = layer2.negative_log_likelihood(y)
 		params = layer2.params + layer1.params + layer0.params
 		grads = T.grad(cost, params)
 		updates = [(param, param - learningRate * grad) for param, grad in zip(params, grads)]
@@ -178,6 +178,21 @@ class Net:
 			cost,
 			updates=updates
 		)
+		
+	def validate(self):
+		errTotal = 0.0
+		costTotal = 0.0
+		for i in range(10):
+			err, cost = self.validate_model(i)
+			errTotal += err
+			costTotal += cost
+		return errTotal / 10.0, costTotal / 10.0
+
+	def test(self):
+		err = 0.0
+		for i in range(10):
+			err += self.test_model(i)
+		return err / 10.0
 
 def loadData():
 	with gzip.open('mnist.pkl.gz', 'rb') as f:
@@ -190,17 +205,19 @@ def loadData():
 
 def main():
 	train_x, train_y, valid_x, valid_y, test_x, test_y = loadData()
-	net = Net(train_x, train_y, valid_x, valid_y, test_x, test_y, 32)
+	net = Net(train_x, train_y, valid_x, valid_y, test_x, test_y, 128)
 	
-	for j in range(5):
-		for i in range(1000):
-			loss = net.train_model(0.02)
+	for j in range(20):
+		loss = 0
+		for i in range(390):
+			loss += net.train_model(0.1)
 			
-		err = net.validate_model()
-		print err
+		err, cost = net.validate()
+		print err, cost, loss/390.0
 	
-	err = net.test_model()
+	err = net.test()
 	print 'ERREUR FINALE :', err
 
 if __name__ == '__main__':
 	main()
+
