@@ -1,0 +1,5 @@
+Pour exécuter le projet sur les ordinateurs de l'école, il suffit d'entrer les commandes suivantes:
+
+source initEnv.sh : Le script initEnv.sh permet à Theano de savoir où se trouve les librairies CUDA sur l'ordinateur
+
+python run.py : Cette commande lance le projet
