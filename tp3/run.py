@@ -275,8 +275,10 @@ def main():
 	lossPlot.axis([0,graphUpdates,-10,0.0])
 	trainingLossLine, = lossPlot.plot([], [], label='Cout apprentissage')
 	validationLossLine, = lossPlot.plot([], [], label='Cout validation')
-	legend = lossPlot.legend(loc='upper right', shadow=True)
-	plt.title("Fonction de cout sur l'ensemble de test et de validation")
+	legend = lossPlot.legend(loc='lower left', shadow=True)
+	plt.title("Fonction de cout sur l'ensemble de test et de validation en espace logarithmique")
+	plt.xlabel('Nombre de batch updates (x20)')
+	plt.ylabel('log(Perte)')
 	plt.show()
 	
 	errPlot = fig.add_subplot(212)
@@ -284,6 +286,8 @@ def main():
 	errLine, = errPlot.plot([], [], label="Erreur sur l'ensemble de validation")
 	legend = errPlot.legend(loc='upper right', shadow=True)
 	plt.title("Erreur sur l'ensemble de validation")
+	plt.xlabel('Nombre de batch updates (x20)')
+	plt.ylabel('erreur')
 	plt.show()
 	
 	fig.canvas.draw()
