@@ -1,5 +1,5 @@
 import os
-os.environ['THEANO_FLAGS'] = 'floatX=float32,device=gpu,lib.cnmem=0.5'
+os.environ['THEANO_FLAGS'] = 'floatX=float32,device=gpu1,lib.cnmem=0.5'
 
 import theano
 import theano.tensor as T
@@ -11,6 +11,7 @@ import cPickle
 import gzip
 import matplotlib.pyplot as plt
 import math
+import sys
 
 #From https://github.com/Theano/Theano/blob/master/theano/tensor/nnet/nnet.py#L2187
 #to be compatible with theano 0.7.0
@@ -247,6 +248,7 @@ def loadData():
 	
 def showExamples(net, n, test_set):
 	plt.figure()
+	plt.ion()
 	for i in range(n):
 		index = numpy.random.randint(0, 10000)
 		img = test_set[index,:]
@@ -257,59 +259,74 @@ def showExamples(net, n, test_set):
 		raw_input('Appuyer sur [enter] pour continuer')
 
 def main():
-	batchSize = 128
-	batchUpdates = 7600
-	graphUpdateFreq = 20 #Number of updates after which the graph is updated
-	graphUpdates = batchUpdates // graphUpdateFreq
-	
 	train_x, train_y, valid_x, valid_y, test_x, test_y = loadData()
-	net = Net(train_x, train_y, valid_x, valid_y, test_x, test_y, batchSize)
 	
-	validationLosses = []
-	validationErr = []
-	trainingLosses = []
-	
-	plt.ion()
-	fig = plt.figure()
-	lossPlot = fig.add_subplot(211)
-	lossPlot.axis([0,graphUpdates,-10,0.0])
-	trainingLossLine, = lossPlot.plot([], [], label='Cout apprentissage')
-	validationLossLine, = lossPlot.plot([], [], label='Cout validation')
-	legend = lossPlot.legend(loc='lower left', shadow=True)
-	plt.title("Fonction de cout sur l'ensemble de test et de validation en espace logarithmique")
-	plt.xlabel('Nombre de batch updates (x20)')
-	plt.ylabel('log(Perte)')
-	plt.show()
-	
-	errPlot = fig.add_subplot(212)
-	errPlot.axis([0, graphUpdates, 0, 0.3])
-	errLine, = errPlot.plot([], [], label="Erreur sur l'ensemble de validation")
-	legend = errPlot.legend(loc='upper right', shadow=True)
-	plt.title("Erreur sur l'ensemble de validation")
-	plt.xlabel('Nombre de batch updates (x20)')
-	plt.ylabel('erreur')
-	plt.show()
-	
-	fig.canvas.draw()
-	
-	for j in range(graphUpdates):
-		loss = 0
-		for i in range(graphUpdateFreq):
-			loss += net.train_model(0.05)
-
-		err, cost = net.validate()
-		validationLosses.append(math.log(cost))
-		trainingLosses.append(math.log(loss / graphUpdateFreq))
-		validationErr.append(err)
+	net = None
+	if len(sys.argv) >= 2:
+		filename = sys.argv[1]
+		f = open(filename, 'r')
+		data = cPickle.load(f)
+		f.close()
+		net = data['net']
+	else:
+		batchSize = 128
+		batchUpdates = 7600
+		graphUpdateFreq = 20 #Number of updates after which the graph is updated
+		graphUpdates = batchUpdates // graphUpdateFreq
 		
-		trainingLossLine.set_xdata(range(j+1))
-		trainingLossLine.set_ydata(trainingLosses)
-		validationLossLine.set_xdata(range(j+1))
-		validationLossLine.set_ydata(validationLosses)
-		errLine.set_xdata(range(j+1))
-		errLine.set_ydata(validationErr)
+		net = Net(train_x, train_y, valid_x, valid_y, test_x, test_y, batchSize)
+		
+		validationLosses = []
+		validationErr = []
+		trainingLosses = []
+		
+		plt.ion()
+		fig = plt.figure()
+		lossPlot = fig.add_subplot(211)
+		lossPlot.axis([0,graphUpdates,-10,0.0])
+		trainingLossLine, = lossPlot.plot([], [], label='Cout apprentissage')
+		validationLossLine, = lossPlot.plot([], [], label='Cout validation')
+		legend = lossPlot.legend(loc='lower left', shadow=True)
+		plt.title("Fonction de cout sur l'ensemble de test et de validation en espace logarithmique")
+		plt.xlabel('Nombre de batch updates (x20)')
+		plt.ylabel('log(Perte)')
+		plt.show()
+		
+		errPlot = fig.add_subplot(212)
+		errPlot.axis([0, graphUpdates, 0, 0.3])
+		errLine, = errPlot.plot([], [], label="Erreur sur l'ensemble de validation")
+		legend = errPlot.legend(loc='upper right', shadow=True)
+		plt.title("Erreur sur l'ensemble de validation")
+		plt.xlabel('Nombre de batch updates (x20)')
+		plt.ylabel('erreur')
+		plt.show()
+		
 		fig.canvas.draw()
-	
+		
+		for j in range(graphUpdates):
+			loss = 0
+			for i in range(graphUpdateFreq):
+				loss += net.train_model(0.05)
+
+			err, cost = net.validate()
+			validationLosses.append(math.log(cost))
+			trainingLosses.append(math.log(loss / graphUpdateFreq))
+			validationErr.append(err)
+			
+			trainingLossLine.set_xdata(range(j+1))
+			trainingLossLine.set_ydata(trainingLosses)
+			validationLossLine.set_xdata(range(j+1))
+			validationLossLine.set_ydata(validationLosses)
+			errLine.set_xdata(range(j+1))
+			errLine.set_ydata(validationErr)
+			fig.canvas.draw()
+			
+		#Save the network
+		data = {'net':net}
+		f = open('network.pkl', 'w')
+		cPickle.dump(data, f, -1)
+		f.close()
+		
 	err = net.test()
 	print 'ERREUR FINALE :', err
 	
